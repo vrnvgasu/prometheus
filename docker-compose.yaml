@@ -1,0 +1,41 @@
+services:
+  simple-app:
+    image: mrgreyves/simple-app:0.5
+    environment:
+      - ADDITIONAL_INFO=${ADDITIONAL_INFO}
+    ports:
+      - 8080:8080
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      simple-app:
+        aliases:
+          - simple-app
+
+  postgresql:
+    image: postgres:16.1-alpine3.19
+    environment:
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=simple-app
+      - POSTGRES_USER=simple-app
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      simple-app:
+        aliases:
+          - postgresql
+
+networks:
+  simple-app:
+
+volumes:
+  pgdata:

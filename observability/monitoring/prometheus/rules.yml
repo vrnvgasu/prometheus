@@ -1,0 +1,11 @@
+groups:
+  - name: example
+    rules:
+      - alert: simpleAppdown #наше имя первого правила в группе правил
+        expr: up{job="simple-app"} != 1 #выражение, которое должно перейти в статус true. Тут simple-app должен отвечать 1
+        for: 15s #если 15с сервер отдает НЕ 1, то алерт сработал
+        labels:
+          severity: critical # дополнительный лейб на алерт, чтобы легко было найти
+        annotations: #пишем, что произошло
+          summary: "Instance {{ $labels.instance }} down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 15s"

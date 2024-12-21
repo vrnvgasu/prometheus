@@ -1,0 +1,58 @@
+services:
+  postgresql-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://simple-app:password123@postgresql:5432/simple-app?sslmode=disable
+    ports:
+      - 9187:9187
+    networks:
+      simple-app_simple-app:
+        aliases:
+          - postgresql-exporter
+
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    volumes:
+      - ./observability/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./observability/monitoring/prometheus/rules.yml:/etc/prometheus/rules.yml
+    ports:
+      - 9090:9090
+    networks:
+      simple-app_simple-app:
+        aliases:
+          - prometheus
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    ports:
+      - 3000:3000
+    volumes:
+      - ./observability/monitoring/grafana/grafana.yml:/etc/grafana/provisioning/datasources/grafana.yml
+    networks:
+      simple-app_simple-app:
+        aliases:
+          - grafana
+
+  victoriametrics: #хранилище метрик
+    image: victoriametrics/victoria-metrics:v1.107.0
+    ports:
+      - 8428:8428
+    networks:
+      simple-app_simple-app:
+        aliases:
+          - victoriametrics
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    ports:
+      - 9093:9093
+    volumes:
+      - ./observability/monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    networks:
+      simple-app_simple-app:
+        aliases:
+          - alertmanager
+
+networks:
+  simple-app_simple-app:
+    external: true

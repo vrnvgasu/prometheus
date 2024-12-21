@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 15s #собираем метрики раз в 15с
+  evaluation_interval: 15s #будем перечитывать какой-то файл с конфигами
+  external_labels:
+    otus: go #добавляем лейбл go для метрик, помещаемых в отдельное хранилище (у нас виторияметрикс)
+
+remote_write: #отправляем метрики в это хранилище
+  - url: http://victoriametrics:8428/api/v1/write
+    queue_config: #дефолтный конфиг из доки
+      max_samples_per_send: 10000
+      capacity: 20000
+      max_shards: 30
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093 #передаем алерты сообщения сюда
+rule_files:
+  - rules.yml #правила, по которым будем наблюдать и реагировать
+
+scrape_configs: #таргеты для сбора метрик
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "victoriametrics"
+    static_configs:
+      - targets: ["victoriametrics:8428"]
+
+  - job_name: "alertmanager"
+    static_configs:
+      - targets: ["alertmanager:9093"]
+
+  - job_name: "simple-app" #это таргет приложения. Наблюдаем за ним
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["simple-app:8080"]
+
+  - job_name: "postgresql" #это таргет БД. Наблюдаем за ним
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["postgresql-exporter:9187"]
